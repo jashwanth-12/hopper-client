@@ -1,4 +1,7 @@
-"""Minimal hopper-client usage — a drop-in for the OpenAI async client."""
+"""Minimal hopper-client usage — a drop-in for the OpenAI async client.
+
+    pip install hopper-client
+"""
 import asyncio
 
 from hopper import AsyncHopper as AsyncOpenAI
