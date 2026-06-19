@@ -1,14 +1,35 @@
 [project]
 name = "hopper-client"
 version = "0.1.0"
-description = "Drop-in, voice-tuned OpenAI client (HTTP/2 + warm connection reuse)."
+description = "Drop-in, voice-tuned OpenAI async client (HTTP/2 + warm connection reuse)."
 readme = "README.md"
 requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "jashwanth-12", email = "jashwanth-12@users.noreply.github.com" }]
+keywords = ["openai", "voice", "llm", "http2", "latency", "streaming", "async"]
 dependencies = [
     "openai>=1.40",
     # http2 extra pulls in h2 — HTTP/2 is on by default, so it's a hard dep.
     "httpx[http2]>=0.27",
 ]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/jashwanth-12/hopper-client"
+Repository = "https://github.com/jashwanth-12/hopper-client"
+Issues = "https://github.com/jashwanth-12/hopper-client/issues"
 
 [build-system]
 requires = ["hatchling"]
