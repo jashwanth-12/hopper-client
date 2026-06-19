@@ -2,11 +2,11 @@
 
 A drop-in, voice-tuned replacement for the OpenAI client. It has the same interface as OpenAI client with optimized config so that a voice agent stops paying a fresh TCP + TLS handshake on every turn.
 
-**Why this exists.** Voice agents call an LLM once per conversational turn. With the
+Voice agents call an LLM once per conversational turn. With the
 stock OpenAI client (HTTP/1.1, 5-second keep-alive) the connection is constantly
 torn down and rebuilt between turns, conversational pauses exceed the keep-alive
 window and hence you can't reuse a HTTP/1.1 connection. Each rebuild costs a TCP + TLS handshake, which is **hundreds of milliseconds added to every turn**. `hopper-client`
-fixes this with a singlevwarm connection that is reused across turns and interruptions.
+fixes this with a single warm connection that is reused across turns and interruptions.
 
 ```python
 # before
