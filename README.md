@@ -22,8 +22,6 @@ client = AsyncOpenAI(base_url="https://api.withhopper.com/v1", api_key="sk-...")
 
 ```bash
 pip install hopper-client  
-# or, from source:
-pip install -e .
 ```
 
 Pulls `openai` and `httpx[http2]`
