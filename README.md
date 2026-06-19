@@ -18,19 +18,6 @@ from hopper import AsyncHopper as AsyncOpenAI
 client = AsyncOpenAI(base_url="https://api.withhopper.com/v1", api_key="sk-...")
 ```
 
-Initialize **once, globally**, and reuse it everywhere — constructing a client
-per request gives each one its own pool and defeats the warm-connection win:
-
-```python
-from hopper import AsyncHopper
-
-client = AsyncHopper(base_url="https://api.withhopper.com/v1", api_key="sk-...")
-
-async def handle_turn(messages):
-    return await client.chat.completions.create(
-        model="Qwen/Qwen3.6-35B-A3B", messages=messages, stream=True)
-```
-
 ## Install
 
 ```bash
