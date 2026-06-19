@@ -1,20 +1,12 @@
 # hopper-client
 
-A drop-in, voice-tuned replacement for the OpenAI async client. It speaks the
-exact same API as `openai`'s `AsyncOpenAI`, but ships an **HTTP/2 connection pool
-that stays warm across streaming turns** — so a voice agent stops paying a fresh
-TCP + TLS handshake on every turn.
+A drop-in, voice-tuned replacement for the OpenAI client. It has the same interface as OpenAI client with optimized config so that a voice agent stops paying a fresh TCP + TLS handshake on every turn.
 
-**Why this exists.** Voice agents call an LLM once per conversational turn, and
-the thing that gates response latency is **time-to-first-token (TTFT)**. With the
+**Why this exists.** Voice agents call an LLM once per conversational turn. With the
 stock OpenAI client (HTTP/1.1, 5-second keep-alive) the connection is constantly
-torn down and rebuilt between turns — conversational pauses exceed the keep-alive
-window, and cancelling a stream early (barge-in) leaves an HTTP/1.1 connection
-un-reusable, so it's closed. Each rebuild costs a TCP + TLS handshake, which on a
-long-RTT path is **hundreds of milliseconds added to every turn**. `hopper-client`
-fixes this with one change: an HTTP/2 pool with a long keep-alive, so a single
-warm connection is reused across turns, interruptions, and many concurrent
-sessions.
+torn down and rebuilt between turns, conversational pauses exceed the keep-alive
+window and hence you can't reuse a HTTP/1.1 connection. Each rebuild costs a TCP + TLS handshake, which is **hundreds of milliseconds added to every turn**. `hopper-client`
+fixes this with a singlevwarm connection that is reused across turns and interruptions.
 
 ```python
 # before
@@ -42,21 +34,19 @@ async def handle_turn(messages):
 ## Install
 
 ```bash
-pip install hopper-client      # once published
+pip install hopper-client  
 # or, from source:
 pip install -e .
 ```
 
-Pulls `openai` and `httpx[http2]` (the `h2` package is a hard dependency, since
-HTTP/2 is on by default).
+Pulls `openai` and `httpx[http2]`
 
 ## Parameters & reasoning
 
 `AsyncHopper` has the **identical constructor** to `AsyncOpenAI` — every OpenAI
 parameter is accepted and passed straight through. The only difference is the
 **default transport**: when you don't supply your own `http_client`, Hopper builds
-one tuned for voice. To override anything, pass your own `http_client=` (the
-standard OpenAI escape hatch).
+one tuned for voice. To override anything, pass your own `http_client=`.
 
 | Setting | OpenAI default | Hopper default | Why |
 |---|---|---|---|
@@ -68,15 +58,12 @@ standard OpenAI escape hatch).
 | `read` / `write` / `pool` timeout | `600s` | **`60s`** | `read` is the per-chunk gap (it bounds both TTFT and inter-token stalls), not a total cap. 60s is generous but far tighter than 600s. Override per-request for a strict turn budget. |
 | `max_retries` | `2` | `2` (unchanged) | Left at the default for now. Note retries add latency silently; voice deployments may prefer `0`–`1` plus explicit hedging. |
 
-The timeout is set on the **SDK client**, not the httpx client, on purpose: the
-OpenAI SDK builds every request with `timeout=self.timeout`, overriding whatever
-the httpx client carries — so the SDK-level value is the authoritative one.
 
 ## Results
 
 Measured with `scripts/voice_sim.py` against a live `Qwen/Qwen3.6-35B-A3B`
 endpoint, comparing vanilla `AsyncOpenAI` vs `AsyncHopper` on the same model and
-target. The decisive metric is **connections created** — vanilla opens one per
+target. Vanilla opens one per
 call, Hopper reuses a single warm connection throughout.
 
 | Scenario | Calls | Vanilla conns | Hopper conns | Vanilla TTFT (median) | Hopper TTFT (median) |
@@ -87,28 +74,5 @@ call, Hopper reuses a single warm connection throughout.
 | **steady** — back-to-back turns, no gaps (control) | 9 | **9** | **1** | 514 ms | 193 ms |
 
 The standout is **concurrent**: 60 concurrent LLM calls rode a **single** HTTP/2
-connection with Hopper, versus 61 separate connections with vanilla. In a real
-high-concurrency voice server that's the difference between one warm connection
-and hundreds of handshakes.
+connection with Hopper, versus 61 separate connections with vanilla.
 
-> **Caveat on the latency numbers.** This run went through a corporate proxy, so
-> the absolute TTFT figures are *indicative, not production-accurate*. The
-> connection counts are valid regardless (they count client-side connection
-> creation). For quotable latency, run the benchmark from a clean, unproxied host
-> near the endpoint.
-
-### Running the benchmarks
-
-```bash
-export HOPPER_API_KEY=sk-...
-python scripts/voice_sim.py                  # all scenarios
-python scripts/voice_sim.py --scenario concurrent --sessions 40
-python scripts/simulate_pool.py --concurrency 20 --wait 8   # memory / FD footprint
-```
-
-## Roadmap
-
-This is the minimal first cut — connection reuse only. Planned, behind the same
-drop-in interface: connection keep-warm heartbeat, request hedging for tail
-latency, client-side caching for canned turns, and an HTTP/3 (QUIC) transport for
-lossy mobile networks.
