@@ -53,7 +53,7 @@ endpoint, comparing vanilla `AsyncOpenAI` vs `AsyncHopper` on the same model and
 target. Vanilla opens one per
 call, Hopper reuses a single warm connection throughout.
 
-| Scenario | Calls | Vanilla conns | Hopper conns | Vanilla TTFT (median) | Hopper TTFT (median) |
+| Scenario | Calls | OpenAI client conns | Hopper client conns | OpenAI client TTFT (median) | Hopper client TTFT (median) |
 |---|---|---|---|---|---|
 | **gaps** — conversational pauses between turns | 7 | **7** | **1** | 510 ms | 197 ms |
 | **bargein** — stream cancelled after first token | 9 | **9** | **1** | 512 ms | 193 ms |
