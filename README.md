@@ -60,6 +60,4 @@ call, Hopper reuses a single warm connection throughout.
 | **concurrent** — 20 sessions × 3 turns | 61 | **61** | **1** | 600 ms | 319 ms |
 | **steady** — back-to-back turns, no gaps (control) | 9 | **9** | **1** | 514 ms | 193 ms |
 
-The standout is **concurrent**: 60 concurrent LLM calls rode a **single** HTTP/2
-connection with Hopper, versus 61 separate connections with vanilla.
 
